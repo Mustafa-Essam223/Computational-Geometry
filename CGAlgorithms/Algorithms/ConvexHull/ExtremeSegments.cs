@@ -1,4 +1,4 @@
-﻿using CGUtilities;
+using CGUtilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,42 +12,59 @@ namespace CGAlgorithms.Algorithms.ConvexHull
 
         public override void Run(List<Point> points, List<Line> lines, List<Polygon> polygons, ref List<Point> outPoints, ref List<Line> outLines, ref List<Polygon> outPolygons)
         {
-
-            Dictionary<Line, bool> Extreme_Segments = new Dictionary<Line, bool>();
             for (int i = 0; i < points.Count; i++)
             {
-                for (int j = 0; j < points.Count; j++)
+                for (int j = i + 1; j < points.Count; j++)
                 {
-                    if (points[i] == points[j])
-                        continue;
-                    Line line = new Line(points[i], points[j]);
-                    Extreme_Segments.Add(line, true);
-                }
-            }
-            foreach (KeyValuePair<Line, bool> seg in Extreme_Segments)
-            {
-                int cntr = 0;
-                for (int pnt = 0; pnt < points.Count; pnt++)
-                {
-                    if (seg.Key.End != points[pnt] && seg.Key.Start != points[pnt])
+                    if (points[i].X == points[j].X && points[i].Y == points[j].Y)
                     {
-                        if (HelperMethods.CheckTurn(seg.Key, points[pnt]) == Enums.TurnType.Right ||
-                            HelperMethods.CheckTurn(seg.Key, points[pnt]) == Enums.TurnType.Colinear)
-                            cntr++;
+                        points.RemoveAt(j);
+                        j--;
                     }
                 }
-                if (!(cntr == 0||cntr==points.Count))
-                {
-                    Extreme_Segments[seg.Key] = false;
-                }
             }
-            foreach(KeyValuePair<Line, bool> seg in Extreme_Segments)
+            if (points.Count <= 2)
             {
-                if (seg.Value==true)
-                    outLines.Add(seg.Key);
+                outPoints = points;
+                return;
+            }
+
+            for (int i = 0; i < points.Count; i++)
+            {
+                int right_dir, left_dir, clinears;
+                for (int j = i + 1; j < points.Count(); ++j)
+                {
+                    right_dir = left_dir = clinears = 0;
+                    for (int pnt = 0; pnt < points.Count; ++pnt)
+                    {
+                        if (pnt == i || pnt == j)
+                            continue;
+                        if (HelperMethods.CheckTurn(new Line(points[i], points[j]), points[pnt])
+                            == Enums.TurnType.Right)
+                            right_dir++;
+                        else if (HelperMethods.CheckTurn(new Line(points[i], points[j]), points[pnt])
+                            == Enums.TurnType.Left)
+                            left_dir++;
+                        else clinears++;
+                    }
+                    if (right_dir == points.Count - 2 - clinears || left_dir == points.Count - 2 - clinears) //All points are in one side
+                    {
+                        Line extreme_seg = new Line(points[i], points[j]);
+                        outLines.Add(extreme_seg);
+                        if (!outPoints.Contains(points[i]))
+                            outPoints.Add(points[i]);
+                        if (!outPoints.Contains(points[j]))
+                            outPoints.Add(points[j]);
+                    }
+                }
             }
 
         }
+
+
+
+
+
 
 
         public override string ToString()
